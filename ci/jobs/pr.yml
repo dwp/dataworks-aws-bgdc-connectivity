@@ -15,7 +15,7 @@ jobs:
         input_mapping:
           dataworks-aws-bgdc-connectivity: dataworks-aws-bgdc-connectivity-pr
         params:
-          TF_WORKSPACE: "qa"
+          TF_WORKSPACE: "default"
           DETAILED_EXITCODE: ""
         on_failure:
           put: dataworks-aws-bgdc-connectivity-pr
