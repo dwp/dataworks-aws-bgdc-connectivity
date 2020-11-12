@@ -15,5 +15,8 @@ resource "aws_vpc_peering_connection" "bgdc_to_internal_compute" {
     {
       Name = "bgdc-to-internal-compute"
     },
+    {
+      Costcode = "PRJ0022507"
+    },
   )
 }
