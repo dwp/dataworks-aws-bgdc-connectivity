@@ -29,7 +29,7 @@ data "aws_security_group" "informatica_edc_infa_domain" {
     values = ["InfaDomainEDCSecurityGroup", ]
   }
 
-  #depends_on = [aws_cloudformation_stack.informatica-edc]
+  depends_on = [aws_cloudformation_stack.informatica-edc]
 }
 
 resource "aws_security_group_rule" "edc_to_hive" {
@@ -40,10 +40,6 @@ resource "aws_security_group_rule" "edc_to_hive" {
   protocol                 = "tcp"
   source_security_group_id = data.aws_security_group.informatica_edc_infa_domain.id
   security_group_id        = data.terraform_remote_state.analytical_dataset_gen.outputs.hive_metastore.security_group.id
-}
-
-resource "aws_s3_bucket" "test" {
-  bucket = data.aws_security_group.informatica_edc_infa_domain.id
 }
 
 resource "aws_cloudformation_stack" "informatica-edc" {
