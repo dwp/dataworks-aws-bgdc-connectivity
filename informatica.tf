@@ -21,6 +21,31 @@ data "aws_subnet_ids" "bgdc_private" {
   }
 }
 
+data "aws_security_group" "informatica_edc_infa_domain" {
+  vpc_id = data.aws_vpc.bgdc.id
+
+  filter {
+    name   = "tag:aws:cloudformation:logical-id"
+    values = ["InfaDomainEDCSecurityGroup", ]
+  }
+
+  #depends_on = [aws_cloudformation_stack.informatica-edc]
+}
+
+resource "aws_security_group_rule" "edc_to_hive" {
+  description              = "Allow requests from BGDC Informatica EDC"
+  type                     = "ingress"
+  from_port                = 3306
+  to_port                  = 3306
+  protocol                 = "tcp"
+  source_security_group_id = data.aws_security_group.informatica_edc_infa_domain.id
+  security_group_id        = data.terraform_remote_state.analytical_dataset_gen.outputs.hive_metastore.security_group.id
+}
+
+resource "aws_s3_bucket" "test" {
+  bucket = data.aws_security_group.informatica_edc_infa_domain.id
+}
+
 resource "aws_cloudformation_stack" "informatica-edc" {
   name               = "informatica-edc"
   capabilities       = ["CAPABILITY_IAM"]
