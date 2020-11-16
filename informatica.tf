@@ -4,11 +4,12 @@ locals {
   informatica_high_availability = "Disable"
   informatica_cluster_size      = "Small"
   informatica_deploy_bastion    = "No"
-  secret_name                   = "dmitri1"
-  informatica_licence_key_url   = lookup(jsondecode(data.aws_secretsmanager_secret_version.bgdc_secret.secret_string).informatica_licence_key_url, local.environment)
+  secret_name                   = "/concourse/dataworks/bgdc"
+  informatica_licence_key_url   = lookup(jsondecode(data.aws_secretsmanager_secret_version.bgdc_secret.secret_binary).informatica_licence_key_url, local.environment)
 }
 
 data "aws_secretsmanager_secret_version" "bgdc_secret" {
+  provider  = aws.mgmt
   secret_id = local.secret_name
 }
 
