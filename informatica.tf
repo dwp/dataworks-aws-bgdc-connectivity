@@ -4,7 +4,7 @@ locals {
   informatica_high_availability = "Disable"
   informatica_cluster_size      = "Small"
   informatica_deploy_bastion    = "No"
-  secret_name                   = "/concourse/dataworks/bgdc"
+  secret_name                   = "dmitri1"
   informatica_licence_key_url   = lookup(jsondecode(data.aws_secretsmanager_secret_version.bgdc_secret.secret_string).informatica_licence_key_url, local.environment)
 }
 
@@ -29,7 +29,7 @@ data "aws_security_group" "informatica_edc_infa_domain" {
     values = ["InfaDomainEDCSecurityGroup", ]
   }
 
-  depends_on = [aws_cloudformation_stack.informatica-edc]
+  #depends_on = [aws_cloudformation_stack.informatica-edc]
 }
 
 resource "aws_security_group_rule" "edc_to_hive" {
