@@ -26,7 +26,7 @@ data "aws_route_table" "bgdc_private" {
 }
 
 resource "aws_route" "bgdc_to_internal_compute" {
-  count = length(data.terraform_remote_state.internal_compute.outputs.adg_subnet.ids)
+  count                     = length(data.terraform_remote_state.internal_compute.outputs.adg_subnet.ids)
   route_table_id            = data.aws_route_table.bgdc_private.id
   destination_cidr_block    = data.terraform_remote_state.internal_compute.outputs.adg_subnet.cidr_blocks[count.index]
   vpc_peering_connection_id = aws_vpc_peering_connection.bgdc_to_internal_compute.id
