@@ -33,13 +33,34 @@ data "aws_security_group" "informatica_edc_infa_domain" {
   #depends_on = [aws_cloudformation_stack.informatica-edc]
 }
 
-resource "aws_security_group_rule" "edc_to_hive" {
+data "aws_security_group" "informatica_edc_infa_additional" {
+  vpc_id = data.aws_vpc.bgdc.id
+
+  filter {
+    name   = "tag:aws:cloudformation:logical-id"
+    values = ["AdditionalEDCSecurityGroup", ]
+  }
+
+  #depends_on = [aws_cloudformation_stack.informatica-edc]
+}
+
+resource "aws_security_group_rule" "edc_domain_to_hive" {
   description              = "Allow requests from BGDC Informatica EDC"
   type                     = "ingress"
   from_port                = 3306
   to_port                  = 3306
   protocol                 = "tcp"
   source_security_group_id = data.aws_security_group.informatica_edc_infa_domain.id
+  security_group_id        = data.terraform_remote_state.analytical_dataset_gen.outputs.hive_metastore.security_group.id
+}
+
+resource "aws_security_group_rule" "edc_additional_to_hive" {
+  description              = "Allow requests from BGDC Informatica EDC"
+  type                     = "ingress"
+  from_port                = 3306
+  to_port                  = 3306
+  protocol                 = "tcp"
+  source_security_group_id = data.aws_security_group.informatica_edc_infa_additional.id
   security_group_id        = data.terraform_remote_state.analytical_dataset_gen.outputs.hive_metastore.security_group.id
 }
 
