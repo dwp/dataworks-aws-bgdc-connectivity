@@ -30,7 +30,7 @@ data "aws_security_group" "informatica_edc_infa_domain" {
     values = ["InfaDomainEDCSecurityGroup", ]
   }
 
-  #depends_on = [aws_cloudformation_stack.informatica-edc]
+  depends_on = [aws_cloudformation_stack.informatica-edc]
 }
 
 data "aws_security_group" "informatica_edc_infa_additional" {
@@ -41,7 +41,7 @@ data "aws_security_group" "informatica_edc_infa_additional" {
     values = ["AdditionalEDCSecurityGroup", ]
   }
 
-  #depends_on = [aws_cloudformation_stack.informatica-edc]
+  depends_on = [aws_cloudformation_stack.informatica-edc]
 }
 
 resource "aws_security_group_rule" "edc_domain_to_hive" {
