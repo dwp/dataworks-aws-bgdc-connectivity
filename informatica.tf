@@ -22,6 +22,11 @@ data "aws_subnet_ids" "bgdc_private" {
   }
 }
 
+data "aws_subnet" "bgdc_private" {
+  count = length(tolist(data.aws_subnet_ids.bgdc_private.ids))
+  id    = tolist(data.aws_subnet_ids.bgdc_private.ids)[count.index]
+}
+
 data "aws_security_group" "informatica_edc_infa_domain" {
   vpc_id = data.aws_vpc.bgdc.id
 
