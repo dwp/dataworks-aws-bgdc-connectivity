@@ -1,6 +1,6 @@
 variable "costcode" {
   type    = string
-  default = ""
+  default = "PRJ0022507"
 }
 
 variable "assume_role" {

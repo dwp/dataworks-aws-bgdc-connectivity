@@ -86,3 +86,6 @@ locals {
       } {%- endfor %}
   }
 }
+
+data "aws_availability_zones" "available" {
+}
