@@ -1,15 +1,15 @@
 module "vpc" {
-  source                       = "dwp/vpc/aws"
-  version                      = "3.0.9"
-  vpc_name                     = local.bgdc_vpc_name
-  region                       = var.region
-  vpc_cidr_block               = lookup(local.cidr_block, local.environment).bgdc-edc-vpc
-  gateway_vpce_route_table_ids = [aws_route_table.public.id, aws_route_table.private.id, ]
-  interface_vpce_source_security_group_ids = [
-  ]
-  interface_vpce_subnet_ids = merge(aws_subnet.public.*.id, aws_subnet.private.*.id)
-  common_tags               = local.common_tags
+  source                                   = "dwp/vpc/aws"
+  version                                  = "3.0.9"
+  vpc_name                                 = local.bgdc_vpc_name
+  region                                   = var.region
+  vpc_cidr_block                           = lookup(local.cidr_block, local.environment).bgdc-edc-vpc
+  gateway_vpce_route_table_ids             = [aws_route_table.public.id, aws_route_table.private.id, ]
+  interface_vpce_source_security_group_ids = [aws_security_group.al2_bastion.id, aws_security_group.win_bastion.id]
+  interface_vpce_subnet_ids                = [aws_subnet.private.0.id]
+  common_tags                              = local.common_tags
 
+  # cfnbootstrap has a bug where is's unable to talk to Cloudformation endpoint if internet access is also available
   aws_vpce_services = [
     "monitoring",
     "s3",
@@ -22,8 +22,17 @@ module "vpc" {
     "elasticmapreduce",
     "logs",
     "autoscaling",
-    "cloudformation"
+    #"cloudformation"
   ]
+}
+
+resource "aws_security_group_rule" "vpce" {
+  type              = "ingress"
+  protocol          = "tcp"
+  from_port         = 443
+  to_port           = 443
+  cidr_blocks       = [module.vpc.vpc.cidr_block]
+  security_group_id = module.vpc.interface_vpce_sg_id
 }
 
 resource "aws_subnet" "public" {
@@ -118,5 +127,5 @@ resource "aws_route_table_association" "private" {
 resource "aws_route" "private_internet" {
   route_table_id         = aws_route_table.private.id
   destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = aws_nat_gateway.public.id
+  nat_gateway_id         = aws_nat_gateway.public.id
 }

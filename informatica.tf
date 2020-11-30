@@ -1,6 +1,6 @@
 locals {
   informatica_template_url      = "https://awsmp-fulfillment-cf-templates-prod.s3-external-1.amazonaws.com/dbbc4c44-2535-4eeb-a670-51110ee604a1-informatica-enterprise-data-catalog-existing-vpc-1041.template"
-  informatica_key_pair_name     = "bgdc-edc-key"
+  informatica_key_pair_name     = "bgdc2"
   informatica_high_availability = "Disable"
   informatica_cluster_size      = "Small"
   informatica_deploy_bastion    = "No"
@@ -13,29 +13,21 @@ data "aws_secretsmanager_secret_version" "bgdc_secret" {
   secret_id = local.secret_name
 }
 
-#data "aws_subnet_ids" "bgdc_private" {
-#  vpc_id = data.aws_vpc.bgdc.id
-#
-#  filter {
-#    name   = "tag:Name"
-#    values = ["bgdc-edc-vpc-stackPrivateSubnetA", "bgdc-edc-vpc-stackPrivateSubnetB"]
-#  }
-#}
 
-#data "aws_subnet" "bgdc_private" {
-#  count = length(tolist(data.aws_subnet_ids.bgdc_private.ids))
-#  id    = tolist(data.aws_subnet_ids.bgdc_private.ids)[count.index]
-#}
+# EDC security group rules have to be injected AFTER aws_cloudformation_stack.informatica-edc have been updated
+# this could be achieved with 'depends_on' but the downside is 'terraform plan' always showing changes
+# Using a spoof edc_dependency variable allows to avoid this
+locals {
+  edc_dependency = substr(aws_cloudformation_stack.informatica-edc.id, 62, 43)
+}
 
 data "aws_security_group" "informatica_edc_infa_domain" {
   vpc_id = module.vpc.vpc.id
 
   filter {
     name   = "tag:aws:cloudformation:logical-id"
-    values = ["InfaDomainEDCSecurityGroup", ]
+    values = ["InfaDomainEDCSecurityGroup", local.edc_dependency]
   }
-
-  depends_on = [aws_cloudformation_stack.informatica-edc]
 }
 
 data "aws_security_group" "informatica_edc_infa_additional" {
@@ -43,10 +35,8 @@ data "aws_security_group" "informatica_edc_infa_additional" {
 
   filter {
     name   = "tag:aws:cloudformation:logical-id"
-    values = ["AdditionalEDCSecurityGroup", ]
+    values = ["AdditionalEDCSecurityGroup", local.edc_dependency]
   }
-
-  depends_on = [aws_cloudformation_stack.informatica-edc]
 }
 
 resource "aws_security_group_rule" "edc_domain_to_hive" {
@@ -67,6 +57,26 @@ resource "aws_security_group_rule" "edc_additional_to_hive" {
   protocol                 = "tcp"
   source_security_group_id = data.aws_security_group.informatica_edc_infa_additional.id
   security_group_id        = data.terraform_remote_state.analytical_dataset_gen.outputs.hive_metastore.security_group.id
+}
+
+resource "aws_security_group_rule" "vpce_from_domain" {
+  description              = "Allow requests from BGDC Informatica EDC"
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  source_security_group_id = data.aws_security_group.informatica_edc_infa_domain.id
+  security_group_id        = module.vpc.interface_vpce_sg_id
+}
+
+resource "aws_security_group_rule" "vpce_from_additional" {
+  description              = "Allow requests from BGDC Informatica EDC"
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  source_security_group_id = data.aws_security_group.informatica_edc_infa_additional.id
+  security_group_id        = module.vpc.interface_vpce_sg_id
 }
 
 resource "aws_cloudformation_stack" "informatica-edc" {
