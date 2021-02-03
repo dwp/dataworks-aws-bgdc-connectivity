@@ -14,9 +14,9 @@ data "aws_secretsmanager_secret_version" "bgdc_secret" {
 }
 
 
-# EDC security group rules have to be injected AFTER aws_cloudformation_stack.informatica-edc have been updated
-# this could be achieved with 'depends_on' but the downside is 'terraform plan' always showing changes
-# Using a spoof edc_dependency variable allows to avoid this
+## EDC security group rules have to be injected AFTER aws_cloudformation_stack.informatica-edc have been updated
+## this could be achieved with 'depends_on' but the downside is 'terraform plan' always showing changes
+## Using a spoof edc_dependency variable allows to avoid this
 locals {
   edc_dependency = substr(aws_cloudformation_stack.informatica-edc.id, 62, 43)
 }
@@ -28,6 +28,8 @@ data "aws_security_group" "informatica_edc_infa_domain" {
     name   = "tag:aws:cloudformation:logical-id"
     values = ["InfaDomainEDCSecurityGroup", local.edc_dependency]
   }
+
+  depends_on = [aws_cloudformation_stack.informatica-edc]
 }
 
 data "aws_security_group" "informatica_edc_infa_additional" {
@@ -37,26 +39,48 @@ data "aws_security_group" "informatica_edc_infa_additional" {
     name   = "tag:aws:cloudformation:logical-id"
     values = ["AdditionalEDCSecurityGroup", local.edc_dependency]
   }
+  depends_on = [aws_cloudformation_stack.informatica-edc]
+
 }
 
 resource "aws_security_group_rule" "edc_domain_to_hive" {
   description              = "Allow requests from BGDC Informatica EDC"
   type                     = "ingress"
-  from_port                = 3306
-  to_port                  = 3306
+  from_port                = 10000
+  to_port                  = 10000
   protocol                 = "tcp"
   source_security_group_id = data.aws_security_group.informatica_edc_infa_domain.id
-  security_group_id        = data.terraform_remote_state.analytical_dataset_gen.outputs.hive_metastore.security_group.id
+  security_group_id        = data.terraform_remote_state.bgdc_interface.outputs.bgdc_common_sg.id
 }
 
 resource "aws_security_group_rule" "edc_additional_to_hive" {
   description              = "Allow requests from BGDC Informatica EDC"
   type                     = "ingress"
-  from_port                = 3306
-  to_port                  = 3306
+  from_port                = 10000
+  to_port                  = 10000
   protocol                 = "tcp"
   source_security_group_id = data.aws_security_group.informatica_edc_infa_additional.id
-  security_group_id        = data.terraform_remote_state.analytical_dataset_gen.outputs.hive_metastore.security_group.id
+  security_group_id        = data.terraform_remote_state.bgdc_interface.outputs.bgdc_common_sg.id
+}
+
+resource "aws_security_group_rule" "edc_domain_to_hive_ssl" {
+  description              = "Allow requests from BGDC Informatica EDC"
+  type                     = "ingress"
+  from_port                = 10443
+  to_port                  = 10443
+  protocol                 = "tcp"
+  source_security_group_id = data.aws_security_group.informatica_edc_infa_domain.id
+  security_group_id        = data.terraform_remote_state.bgdc_interface.outputs.bgdc_common_sg.id
+}
+
+resource "aws_security_group_rule" "edc_additional_to_hive_ssl" {
+  description              = "Allow requests from BGDC Informatica EDC"
+  type                     = "ingress"
+  from_port                = 10443
+  to_port                  = 10443
+  protocol                 = "tcp"
+  source_security_group_id = data.aws_security_group.informatica_edc_infa_additional.id
+  security_group_id        = data.terraform_remote_state.bgdc_interface.outputs.bgdc_common_sg.id
 }
 
 resource "aws_security_group_rule" "vpce_from_domain" {
@@ -79,14 +103,46 @@ resource "aws_security_group_rule" "vpce_from_additional" {
   security_group_id        = module.vpc.interface_vpce_sg_id
 }
 
+resource "aws_security_group_rule" "ssh_informatica_nodes" {
+  description              = "Allow SSH to BGDC Informatica EDC"
+  type                     = "ingress"
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.al2_bastion.id
+  security_group_id        = data.aws_security_group.informatica_edc_infa_additional.id
+}
+
+resource "aws_security_group_rule" "ssh_informatica_nodes_logs" {
+  description              = "Allow Log access to Hadoop node"
+  type                     = "ingress"
+  from_port                = 8044
+  to_port                  = 8044
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.win_bastion.id
+  security_group_id        = data.aws_security_group.informatica_edc_infa_additional.id
+}
+
+resource "aws_security_group_rule" "ssh_informatica_nodes_additional" {
+  description              = "Allow SSH to BGDC Informatica EDC"
+  type                     = "ingress"
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.al2_bastion.id
+  security_group_id        = data.aws_security_group.informatica_edc_infa_domain.id
+}
+
+
+
 resource "aws_cloudformation_stack" "informatica-edc" {
   name               = "informatica-edc"
   capabilities       = ["CAPABILITY_IAM"]
   template_url       = local.informatica_template_url
-  timeout_in_minutes = 180
+  timeout_in_minutes = 240
 
   timeouts {
-    create = "3h"
+    create = "4h"
     delete = "1h"
   }
 

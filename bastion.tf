@@ -14,6 +14,15 @@ resource "aws_security_group_rule" "win_outbound" {
   security_group_id = aws_security_group.win_bastion.id
 }
 
+resource "aws_security_group_rule" "win_outbound_dns" {
+  type              = "egress"
+  protocol          = "udp"
+  from_port         = 53
+  to_port           = 53
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.win_bastion.id
+}
+
 resource "aws_security_group_rule" "win_https" {
   type              = "ingress"
   protocol          = "tcp"
@@ -62,6 +71,15 @@ resource "aws_security_group_rule" "al2_outbound" {
   protocol          = "tcp"
   from_port         = 0
   to_port           = 65535
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.al2_bastion.id
+}
+
+resource "aws_security_group_rule" "al2_outbound_dns" {
+  type              = "egress"
+  protocol          = "udp"
+  from_port         = 53
+  to_port           = 53
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.al2_bastion.id
 }
@@ -115,7 +133,8 @@ resource "aws_instance" "win_bastion" {
   tags = merge(
     local.common_tags,
     {
-      Name = "bgdc-edc-bastion-windows"
+      Name        = "bgdc-edc-bastion-windows",
+      Persistence = "Ignore"
     },
   )
 }
@@ -131,7 +150,8 @@ resource "aws_instance" "al2_bastion" {
   tags = merge(
     local.common_tags,
     {
-      Name = "bgdc-edc-bastion"
+      Name        = "bgdc-edc-bastion",
+      Persistence = "Ignore"
     },
   )
 }
