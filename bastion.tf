@@ -124,7 +124,7 @@ resource "aws_iam_instance_profile" "bastion" {
 
 resource "aws_instance" "win_bastion" {
   ami                    = local.win_bastion_ami_id
-  instance_type          = "t2.micro"
+  instance_type          = "t2.medium"
   vpc_security_group_ids = [aws_security_group.win_bastion.id]
   subnet_id              = aws_subnet.public[0].id
   key_name               = local.informatica_key_pair_name
