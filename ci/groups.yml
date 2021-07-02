@@ -5,3 +5,6 @@ groups:
   - name: pull-request
     jobs:
       - dataworks-aws-bgdc-connectivity-pr
+  - name: update-pipeline
+    jobs:
+      - update-pipeline
