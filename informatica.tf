@@ -50,7 +50,7 @@ resource "aws_security_group_rule" "edc_domain_to_hive" {
   to_port                  = 10000
   protocol                 = "tcp"
   source_security_group_id = data.aws_security_group.informatica_edc_infa_domain.id
-  security_group_id        = data.terraform_remote_state.bgdc_interface.outputs.bgdc_common_sg.id
+  security_group_id        = data.terraform_remote_state.bgdc_interface.outputs.bgdc_common_sg_id
 }
 
 resource "aws_security_group_rule" "edc_additional_to_hive" {
@@ -60,7 +60,7 @@ resource "aws_security_group_rule" "edc_additional_to_hive" {
   to_port                  = 10000
   protocol                 = "tcp"
   source_security_group_id = data.aws_security_group.informatica_edc_infa_additional.id
-  security_group_id        = data.terraform_remote_state.bgdc_interface.outputs.bgdc_common_sg.id
+  security_group_id        = data.terraform_remote_state.bgdc_interface.outputs.bgdc_common_sg_id
 }
 
 resource "aws_security_group_rule" "edc_domain_to_hive_ssl" {
@@ -70,7 +70,7 @@ resource "aws_security_group_rule" "edc_domain_to_hive_ssl" {
   to_port                  = 10443
   protocol                 = "tcp"
   source_security_group_id = data.aws_security_group.informatica_edc_infa_domain.id
-  security_group_id        = data.terraform_remote_state.bgdc_interface.outputs.bgdc_common_sg.id
+  security_group_id        = data.terraform_remote_state.bgdc_interface.outputs.bgdc_common_sg_id
 }
 
 resource "aws_security_group_rule" "edc_additional_to_hive_ssl" {
@@ -80,7 +80,7 @@ resource "aws_security_group_rule" "edc_additional_to_hive_ssl" {
   to_port                  = 10443
   protocol                 = "tcp"
   source_security_group_id = data.aws_security_group.informatica_edc_infa_additional.id
-  security_group_id        = data.terraform_remote_state.bgdc_interface.outputs.bgdc_common_sg.id
+  security_group_id        = data.terraform_remote_state.bgdc_interface.outputs.bgdc_common_sg_id
 }
 
 resource "aws_security_group_rule" "vpce_from_domain" {
