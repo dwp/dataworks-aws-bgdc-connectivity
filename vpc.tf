@@ -1,6 +1,6 @@
 module "vpc" {
   source                                   = "dwp/vpc/aws"
-  version                                  = "3.0.9"
+  version                                  = "3.0.14"
   vpc_name                                 = local.bgdc_vpc_name
   region                                   = var.region
   vpc_cidr_block                           = lookup(local.cidr_block, local.environment).bgdc-edc-vpc
