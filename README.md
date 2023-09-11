@@ -1,3 +1,5 @@
+# DO NOT USE - MIGRATED TO GITLAB
+
 # dataworks-aws-bgdc-connectivity
 
 ## Infrastructure for the connectivity between Business Glossary Data Catalog and DataWorks
